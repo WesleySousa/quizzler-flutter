@@ -1,4 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:quizzler/quiz_brain.dart';
+import 'package:rflutter_alert/rflutter_alert.dart';
+
+QuizBrain quizBrain = QuizBrain();
 
 void main() => runApp(Quizzler());
 
@@ -25,6 +29,48 @@ class QuizPage extends StatefulWidget {
 }
 
 class _QuizPageState extends State<QuizPage> {
+  List<Icon> scoresKeeper = [];
+
+  void reply(bool answer) {
+    if (quizBrain.isFinished()) {
+      print('quiz finished');
+      _onFinishedQuestion(context);
+    } else {
+      setState(() {
+        if (answer == quizBrain.getQuestionAnswer()) {
+          scoresKeeper.add(Icon(Icons.check, color: Colors.green));
+        } else {
+          scoresKeeper.add(Icon(Icons.close, color: Colors.red));
+        }
+        quizBrain.nextQuestion();
+      });
+    }
+  }
+
+  // The easiest way for creating RFlutter Alert
+  _onFinishedQuestion(context) {
+    Alert(
+        context: context,
+        title: "Finished!",
+        desc: "You've reached the end of the quiz.",
+        closeFunction: () { print('close function called.'); },
+        buttons: [
+          DialogButton(
+            child: Text(
+              'CANCEL',
+              style: TextStyle(color: Colors.white),
+            ),
+            onPressed: () {
+              setState(() {
+                scoresKeeper.clear();
+                quizBrain.resetQuiz();
+              });
+              Navigator.pop(context);
+            },
+          ),
+        ]).show();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Column(
@@ -37,7 +83,7 @@ class _QuizPageState extends State<QuizPage> {
             padding: EdgeInsets.all(10.0),
             child: Center(
               child: Text(
-                'This is where the question text will go.',
+                quizBrain.getQuestionText(),
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: 25.0,
@@ -61,7 +107,7 @@ class _QuizPageState extends State<QuizPage> {
                 ),
               ),
               onPressed: () {
-                //The user picked true.
+                reply(true);
               },
             ),
           ),
@@ -79,12 +125,14 @@ class _QuizPageState extends State<QuizPage> {
                 ),
               ),
               onPressed: () {
-                //The user picked false.
+                reply(false);
               },
             ),
           ),
         ),
-        //TODO: Add a Row here as your score keeper
+        Row(
+          children: scoresKeeper,
+        ),
       ],
     );
   }
